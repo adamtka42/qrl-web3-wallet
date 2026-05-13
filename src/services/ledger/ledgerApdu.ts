@@ -291,7 +291,7 @@ export function isWrongApp(statusCode: number): boolean {
  * RESPONSE FORMAT (address only):
  * ┌────────┬───────────────────┬────────┐
  * │ PREFIX │     ADDRESS       │   SW   │
- * │  'Q'   │     48 bytes      │   2B   │
+ * │  'Q'   │     64 bytes      │   2B   │
  * │  1B    │      (hex)        │        │
  * └────────┴───────────────────┴────────┘
  *
@@ -300,7 +300,7 @@ export function isWrongApp(statusCode: number): boolean {
  * This is part of QRL specification.
  *
  * @param response - APDU response from GET_PUBLIC_KEY
- * @returns Address in QRL format (Q + 96 hex characters)
+ * @returns Address in QRL format (Q + 128 hex characters)
  */
 export function parseQrlAddress(response: Buffer): string {
   // Check status
@@ -309,7 +309,7 @@ export function parseQrlAddress(response: Buffer): string {
   // Extract data
   const data = extractResponseData(response);
 
-  // QRL address: 1 byte prefix ('Q') + 48 bytes address = 49 bytes
+  // QRL address: 1 byte prefix ('Q') + 64 bytes address = 65 bytes
   if (data.length < QRL_ADDRESS_RESPONSE_LENGTH) {
     throw createLedgerError(
       0,
@@ -326,7 +326,7 @@ export function parseQrlAddress(response: Buffer): string {
     );
   }
 
-  // Next 48 bytes are the address (in hex)
+  // Next 64 bytes are the address (in hex)
   const addressBytes = data.subarray(1, QRL_ADDRESS_RESPONSE_LENGTH);
   const address = prefix + addressBytes.toString("hex");
 
@@ -337,7 +337,7 @@ export function parseQrlAddress(response: Buffer): string {
  * Result of parsing GET_PUBLIC_KEY response with public key.
  */
 export interface PublicKeyResponse {
-  /** Address in QRL format (Q + 96 hex characters) */
+  /** Address in QRL format (Q + 128 hex characters) */
   address: string;
   /** Dilithium public key (hex with 0x prefix), empty if not included in response */
   publicKey: string;
@@ -354,7 +354,7 @@ export const DILITHIUM_PUBLIC_KEY_SIZE = 2528;
  * RESPONSE FORMAT (with public key):
  * ┌────────┬───────────────────┬────────────────────┬────────┐
  * │ PREFIX │     ADDRESS       │    PUBLIC_KEY      │   SW   │
- * │  'Q'   │     48 bytes      │    2528 bytes      │   2B   │
+ * │  'Q'   │     64 bytes      │    2528 bytes      │   2B   │
  * │  1B    │      (hex)        │                    │        │
  * └────────┴───────────────────┴────────────────────┴────────┘
  *
@@ -368,7 +368,7 @@ export function parsePublicKeyResponse(response: Buffer): PublicKeyResponse {
   // Extract data
   const data = extractResponseData(response);
 
-  // QRL address: 1 byte prefix ('Q') + 48 bytes address = 49 bytes
+  // QRL address: 1 byte prefix ('Q') + 64 bytes address = 65 bytes
   if (data.length < QRL_ADDRESS_RESPONSE_LENGTH) {
     throw createLedgerError(
       0,
@@ -385,7 +385,7 @@ export function parsePublicKeyResponse(response: Buffer): PublicKeyResponse {
     );
   }
 
-  // Next 48 bytes are the address (in hex)
+  // Next 64 bytes are the address (in hex)
   const addressBytes = data.subarray(1, QRL_ADDRESS_RESPONSE_LENGTH);
   const address = prefix + addressBytes.toString("hex");
 

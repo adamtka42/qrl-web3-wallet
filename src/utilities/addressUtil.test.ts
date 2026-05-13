@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import AddressUtil from "./addressUtil";
 
 describe("addressUtil", () => {
-  it("accepts 48-byte Q-prefixed QRL addresses", () => {
+  it("accepts 64-byte Q-prefixed QRL addresses", () => {
     expect(QRL_EXAMPLE_ADDRESS).toHaveLength(QRL_ADDRESS_LENGTH);
     expect(AddressUtil.isQrlAddress(QRL_EXAMPLE_ADDRESS)).toBe(true);
     expect(AddressUtil.isQrlAddress(QRL_EXAMPLE_ADDRESS_2)).toBe(true);
@@ -25,13 +25,13 @@ describe("addressUtil", () => {
       QRL_EXAMPLE_ADDRESS,
     );
     expect(() => AddressUtil.normalizeQrlAddress("Q1234")).toThrow(
-      "Expected 97-character QRL address",
+      "Expected 129-character QRL address",
     );
   });
 
   it("shortens long addresses for compact UI display", () => {
     expect(AddressUtil.shortenQrlAddress(QRL_EXAMPLE_ADDRESS)).toBe(
-      "Q000000000...47996192",
+      "Q8a8a8a8a8...8a8a8a8a",
     );
   });
 });
