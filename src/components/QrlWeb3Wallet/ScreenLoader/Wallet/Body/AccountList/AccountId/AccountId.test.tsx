@@ -12,7 +12,7 @@ describe("AccountId", () => {
   const renderComponent = (
     mockedStoreValues = mockedStore(),
     mockedProps: ComponentProps<typeof AccountId> = {
-      account: "Q0000000000000000000000000000000000000000000000000000000020fB08fF1f1376A14C055E9F56df80563E16722b",
+      account: "Q0000000000000000000000000000000000000000000000000000000020fB08fF1f1376A14C055E9F56df80563E16722b00000000000000000000000000000000",
     },
   ) =>
     render(

@@ -25,7 +25,7 @@ describe("QrlRequestAccount", () => {
             isLoading: false,
             accounts: [
               {
-                accountAddress: "Q0000000000000000000000000000000000000000000000000000000020915094FEDE91EFAC68fD43D82e9Fff4daC7482",
+                accountAddress: "Q0000000000000000000000000000000000000000000000000000000020915094FEDE91EFAC68fD43D82e9Fff4daC748200000000000000000000000000000000",
                 accountBalance: "10 QRL",
               },
             ],

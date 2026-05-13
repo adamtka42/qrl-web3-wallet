@@ -31,7 +31,7 @@ describe("addressUtil", () => {
 
   it("shortens long addresses for compact UI display", () => {
     expect(AddressUtil.shortenQrlAddress(QRL_EXAMPLE_ADDRESS)).toBe(
-      "Q8a8a8a8a8...8a8a8a8a",
+      "Q000000000...00000000",
     );
   });
 });

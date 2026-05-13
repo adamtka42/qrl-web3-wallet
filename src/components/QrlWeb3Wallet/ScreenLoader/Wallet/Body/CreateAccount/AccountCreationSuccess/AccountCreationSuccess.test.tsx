@@ -24,7 +24,7 @@ describe("AccountCreationSuccess", () => {
     mockedStoreValues = mockedStore(),
     mockedProps: ComponentProps<typeof AccountCreationSuccess> = {
       account: {
-        address: "Q00000000000000000000000000000000000000000000000000000000205046e6A6E159eD6ACedE46A36CAD6D449C80A1",
+        address: "Q00000000000000000000000000000000000000000000000000000000205046e6A6E159eD6ACedE46A36CAD6D449C80A100000000000000000000000000000000",
         seed: "",
         sign: (_data: Record<string, unknown> | string) => {
           return { messageHash: "", signature: "", message: "" };
@@ -57,7 +57,7 @@ describe("AccountCreationSuccess", () => {
     );
     expect(screen.getByText("Account public address:")).toBeInTheDocument();
     expect(
-      screen.getByText("Q 00000 00000 00000 00000 00000 00000 00000 00000 00000 00000 00000 02050 46e6A 6E159 eD6AC edE46 A36CA D6D44 9C80A 1"),
+      screen.getByText("Q 00000 00000 00000 00000 00000 00000 00000 00000 00000 00000 00000 02050 46e6A 6E159 eD6AC edE46 A36CA D6D44 9C80A 10000 00000 00000 00000 00000 00000 000"),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -89,7 +89,7 @@ describe("AccountCreationSuccess", () => {
     vi.advanceTimersByTime(1000);
     expect(clipboardMock).toHaveBeenCalledTimes(1);
     expect(clipboardMock).toHaveBeenCalledWith(
-      "Q00000000000000000000000000000000000000000000000000000000205046e6A6E159eD6ACedE46A36CAD6D449C80A1",
+      "Q00000000000000000000000000000000000000000000000000000000205046e6A6E159eD6ACedE46A36CAD6D449C80A100000000000000000000000000000000",
     );
   });
 });
