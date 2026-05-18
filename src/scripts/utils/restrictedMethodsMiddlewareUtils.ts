@@ -123,7 +123,7 @@ export const checkWalletAddQrlChainParams = async (
     return {
       canProceed: false,
       proceedError: rpcErrors.invalidParams({
-        message: `Expected 48-byte Q-prefixed 'qrnsRegistryAddress'. Received: ${qrnsRegistryAddress}`,
+        message: `Expected 64-byte Q-prefixed 'qrnsRegistryAddress'. Received: ${qrnsRegistryAddress}`,
       }),
     };
   }
