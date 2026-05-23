@@ -486,6 +486,25 @@ class QrlStore {
               .call()) as bigint;
             tokenIds.push(tokenId.toString());
           }
+        } else if (balance > 0) {
+          // TODO: contract does not implement the optional ZRC-721 Enumerable
+          // extension (supportsInterface(0x780e9d63) == false), so we cannot
+          // call tokenOfOwnerByIndex to enumerate the user's holdings.
+          //
+          // Implement a Transfer-event scan fallback here:
+          //   1) qrl.getPastLogs({ address: contractAddress,
+          //                        fromBlock: <contract creation block>,
+          //                        topics: [TRANSFER_TOPIC,
+          //                                 null,
+          //                                 <padded user address>] })
+          //   2) qrl.getPastLogs({ ... topics: [..., <padded user>, null] })
+          //   3) For every tokenId that appears as `to` and is still
+          //      ownerOf(tokenId) == user, push it into tokenIds. (Earlier
+          //      `from = user` events drop the token.)
+          //
+          // Until that fallback lands, leave tokenIds empty — the balance
+          // count is still shown elsewhere, but the per-token list and
+          // tokenURI lookups stay unavailable for non-Enumerable contracts.
         }
       } catch {
         // Silently fail — return empty array
