@@ -333,16 +333,16 @@ describe("TransactionDetail", () => {
     expect(mockSendRawTransaction).not.toHaveBeenCalled();
   });
 
-  it("should not call signAndSendReplacement when mnemonic is empty", async () => {
+  it("should not call signAndSendReplacement when seed is empty", async () => {
     const mockSign = vi.fn<any>().mockResolvedValue({
       transactionHash: undefined,
       rawTransaction: undefined,
       error: "",
     });
-    const mockGetMnemonic = vi.fn<any>().mockResolvedValue("");
+    const mockGetAccountSeed = vi.fn<any>().mockResolvedValue("");
     const store = mockedStore({
       lockStore: {
-        getMnemonicPhrases: mockGetMnemonic,
+        getAccountSeed: mockGetAccountSeed,
       },
       qrlStore: {
         signAndSendReplacementTransaction: mockSign,
@@ -360,7 +360,7 @@ describe("TransactionDetail", () => {
     await userEvent.click(dialogButtons[dialogButtons.length - 1]);
 
     await waitFor(() => {
-      expect(mockGetMnemonic).toHaveBeenCalled();
+      expect(mockGetAccountSeed).toHaveBeenCalled();
     });
 
     expect(mockSign).not.toHaveBeenCalled();

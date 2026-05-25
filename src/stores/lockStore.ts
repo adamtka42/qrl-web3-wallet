@@ -28,6 +28,7 @@ class LockStore {
     makeAutoObservable(this, {
       getWalletPassword: action.bound,
       getMnemonicPhrases: action.bound,
+      getAccountSeed: action.bound,
       encryptAccount: action.bound,
       changePassword: action.bound,
       readLockState: action.bound,
@@ -124,6 +125,17 @@ class LockStore {
     );
     const mnemonicPhrases: string = accountKey?.mnemonicPhrases ?? "";
     return mnemonicPhrases;
+  }
+
+  async getAccountSeed(accountAddress: string) {
+    const decryptedKeys: DecryptedKeyType[] =
+      await browser.runtime.sendMessage({
+        name: LOCK_MANAGER_MESSAGES.GET_DECRYPTED_KEYS,
+      });
+    const accountKey = decryptedKeys?.find(
+      (key) => key?.address?.toLowerCase() === accountAddress?.toLowerCase(),
+    );
+    return accountKey?.seed ?? "";
   }
 
   async encryptAccount(account: Web3BaseWalletAccount, password: string) {

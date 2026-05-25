@@ -185,6 +185,9 @@ const mockedStoreValues: StoreType = {
     getMnemonicPhrases: async (accountAddress: string) => {
       return accountAddress;
     },
+    getAccountSeed: async (accountAddress: string) => {
+      return accountAddress;
+    },
     changePassword: async () => {
       return true;
     },

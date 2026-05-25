@@ -18,6 +18,7 @@ export type EncryptAccountType = {
 export type DecryptedKeyType = {
   password: string;
   address: string;
+  seed: string;
   mnemonicPhrases: string;
 };
 
@@ -157,6 +158,7 @@ class LockManager {
         decryptedKeys.push({
           password,
           address,
+          seed,
           mnemonicPhrases: getMnemonicFromHexSeed(seed),
         });
       }
@@ -226,6 +228,7 @@ class LockManager {
     const newKey: DecryptedKeyType = {
       password,
       address: encryptedKeyStore.address,
+      seed: seed as string,
       mnemonicPhrases: getMnemonicFromHexSeed(seed as string),
     };
     const existingKeys = this.decryptedKeys ?? [];

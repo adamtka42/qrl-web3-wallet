@@ -20,6 +20,7 @@ import { ROUTES } from "@/router/router";
 import { useStore } from "@/stores/store";
 import type { TransactionHistoryEntry } from "@/types/transactionHistory";
 import AddressUtil from "@/utilities/addressUtil";
+import { isSuccessfulReceiptStatus } from "@/utilities/receiptStatusUtil";
 import StorageUtil from "@/utilities/storageUtil";
 import StringUtil from "@/utilities/stringUtil";
 import { isQrnsName, resolveQrnsName } from "@/utilities/qrnsResolver";
@@ -57,7 +58,7 @@ const NFTTransfer = observer(() => {
   const { state } = useLocation();
   const navigate = useNavigate();
   const { lockStore, qrlStore, transactionHistoryStore } = useStore();
-  const { getMnemonicPhrases } = lockStore;
+  const { getAccountSeed } = lockStore;
   const {
     activeAccount,
     signNftTransfer,
@@ -102,12 +103,12 @@ const NFTTransfer = observer(() => {
         receiver = resolvedAddress;
       }
 
-      const mnemonicPhrases = await getMnemonicPhrases(accountAddress);
+      const seed = await getAccountSeed(accountAddress);
       const signResult = await signNftTransfer(
         accountAddress,
         receiver,
         tokenId,
-        mnemonicPhrases,
+        seed,
         contractAddress,
       );
 
@@ -160,7 +161,7 @@ const NFTTransfer = observer(() => {
       sendRawTransaction(rawTransaction).then(
         async (receipt) => {
           if (receipt) {
-            const isSuccess = receipt.status?.toString() === "1";
+            const isSuccess = isSuccessfulReceiptStatus(receipt.status);
             await transactionHistoryStore.updateTransaction(
               accountAddress,
               transactionHash,
@@ -181,7 +182,11 @@ const NFTTransfer = observer(() => {
           await transactionHistoryStore.updateTransaction(
             accountAddress,
             transactionHash,
-            { pendingStatus: "failed", status: false },
+            {
+              pendingStatus: "failed",
+              status: false,
+              errorMessage: err instanceof Error ? err.message : String(err),
+            },
           );
         },
       );

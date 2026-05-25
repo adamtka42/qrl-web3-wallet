@@ -18,6 +18,7 @@ export type UnlockWorkerRequest = {
 export type DecryptedKey = {
   password: string;
   address: string;
+  seed: string;
   mnemonicPhrases: string;
 };
 
@@ -34,6 +35,7 @@ self.onmessage = async (event: MessageEvent<UnlockWorkerRequest>) => {
       keys.push({
         password,
         address,
+        seed,
         mnemonicPhrases: getMnemonicFromHexSeed(seed),
       });
     }

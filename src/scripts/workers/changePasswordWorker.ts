@@ -21,6 +21,7 @@ export type ChangePasswordWorkerRequest = {
 export type DecryptedKey = {
   password: string;
   address: string;
+  seed: string;
   mnemonicPhrases: string;
 };
 
@@ -43,6 +44,7 @@ self.onmessage = async (
       newKeys.push({
         password: newPassword,
         address,
+        seed,
         mnemonicPhrases: getMnemonicFromHexSeed(seed),
       });
     }

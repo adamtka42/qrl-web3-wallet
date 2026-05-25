@@ -22,6 +22,7 @@ import { ROUTES } from "@/router/router";
 import { useStore } from "@/stores/store";
 import type { TransactionHistoryEntry } from "@/types/transactionHistory";
 import AddressUtil from "@/utilities/addressUtil";
+import { isSuccessfulReceiptStatus } from "@/utilities/receiptStatusUtil";
 import StorageUtil from "@/utilities/storageUtil";
 import { isQrnsName, resolveQrnsName } from "@/utilities/qrnsResolver";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -69,7 +70,7 @@ const TokenTransfer = observer(() => {
   const navigate = useNavigate();
   const { lockStore, qrlStore, ledgerStore, transactionHistoryStore, priceStore, settingsStore } =
     useStore();
-  const { getMnemonicPhrases } = lockStore;
+  const { getAccountSeed } = lockStore;
   const {
     activeAccount,
     signNativeToken,
@@ -115,12 +116,12 @@ const TokenTransfer = observer(() => {
     if (isLedgerAccount) {
       return await signNativeTokenWithLedger(formData);
     } else {
-      const mnemonicPhrases = await getMnemonicPhrases(accountAddress);
+      const seed = await getAccountSeed(accountAddress);
       return await signNativeToken(
         accountAddress,
         formData.receiverAddress,
         formData.amount,
-        mnemonicPhrases,
+        seed,
         gasFeeOverrides,
       );
     }
@@ -171,12 +172,12 @@ const TokenTransfer = observer(() => {
   };
 
   const signZrc20TokenLocal = async (formData: z.infer<typeof FormSchema>): Promise<SignResult> => {
-    const mnemonicPhrases = await getMnemonicPhrases(accountAddress);
+    const seed = await getAccountSeed(accountAddress);
     return await signZrc20Token(
       accountAddress,
       formData.receiverAddress,
       formData.amount,
-      mnemonicPhrases,
+      seed,
       tokenContractAddress,
       tokenDecimals,
       gasFeeOverrides,
@@ -246,7 +247,7 @@ const TokenTransfer = observer(() => {
       sendRawTransaction(rawTransaction).then(
         async (receipt) => {
           if (receipt) {
-            const isSuccess = receipt.status?.toString() === "1";
+            const isSuccess = isSuccessfulReceiptStatus(receipt.status);
             await transactionHistoryStore.updateTransaction(
               accountAddress,
               transactionHash,
@@ -266,7 +267,11 @@ const TokenTransfer = observer(() => {
           await transactionHistoryStore.updateTransaction(
             accountAddress,
             transactionHash,
-            { pendingStatus: "failed", status: false },
+            {
+              pendingStatus: "failed",
+              status: false,
+              errorMessage: err instanceof Error ? err.message : String(err),
+            },
           );
         },
       );

@@ -95,7 +95,7 @@ describe("QrlSendTransactionForContent", () => {
         ...overrides.dAppRequestStore,
       },
       lockStore: {
-        getMnemonicPhrases: async () => "test mnemonic phrases",
+        getAccountSeed: async () => "0x010000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         ...overrides.lockStore,
       },
       ledgerStore: {
