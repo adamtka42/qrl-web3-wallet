@@ -71,9 +71,7 @@ describe("TokenTransfer", () => {
   ) =>
     render(
       <StoreProvider value={mockedStoreValues}>
-        <MemoryRouter
-          initialEntries={[{ pathname: "/token-transfer", state }]}
-        >
+        <MemoryRouter initialEntries={[{ pathname: "/token-transfer", state }]}>
           <TokenTransfer />
         </MemoryRouter>
       </StoreProvider>,
@@ -107,7 +105,9 @@ describe("TokenTransfer", () => {
     expect(screen.getByText("Active account")).toBeInTheDocument();
     expect(screen.getByText("Account address")).toBeInTheDocument();
     expect(
-      screen.getByText("Q 00000 00000 00000 00000 00000 00000 00000 00000 00000 00000 00000 08A8e AFb1c f62Bf Beb17 41769 DAE1a 9dd47 99619 20000 00000 00000 00000 00000 00000 000"),
+      screen.getByText(
+        "Q 00000 00000 00000 00000 00000 00000 00000 00000 00000 00000 00000 08A8e AFb1c f62Bf Beb17 41769 DAE1a 9dd47 99619 20000 00000 00000 00000 00000 00000 000",
+      ),
     ).toBeInTheDocument();
     expect(screen.getByText("Balance")).toBeInTheDocument();
     expect(screen.getByText("0.0 QRL")).toBeInTheDocument();
@@ -221,9 +221,7 @@ describe("TokenTransfer", () => {
     );
 
     await fillAndSubmitForm();
-    expect(
-      screen.getByText(/User rejected on device/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/User rejected on device/)).toBeInTheDocument();
   });
 
   it("should add pending transaction and navigate home on successful sign", async () => {
@@ -329,7 +327,8 @@ describe("TokenTransfer", () => {
       {
         tokenDetails: {
           isZrc20Token: true,
-          tokenContractAddress: "Q000000000000000000000000000000000000000000000000000000001234567890abcdef1234567890abcdef1234567800000000000000000000000000000000",
+          tokenContractAddress:
+            "Q000000000000000000000000000000000000000000000000000000001234567890abcdef1234567890abcdef1234567800000000000000000000000000000000",
           tokenDecimals: 18,
           tokenImage: "token.png",
           tokenBalance: "100.0",
@@ -363,13 +362,95 @@ describe("TokenTransfer", () => {
     );
   });
 
+  it("should sign ZRC20 token transfer with Ledger account", async () => {
+    const mockSignZrc20Token = vi.fn<any>();
+    const mockSignAndSerializeTransaction = vi
+      .fn<any>()
+      .mockResolvedValue("0x02f8a00180843b9aca00843b9aca0082520894");
+    const mockAddTransaction = vi.fn<any>().mockResolvedValue(undefined);
+    const mockTransfer = vi.fn<any>().mockReturnValue({
+      encodeABI: () => "0xa9059cbb",
+    });
+    const MockContract = vi.fn<any>().mockImplementation(() => ({
+      methods: {
+        transfer: mockTransfer,
+      },
+    }));
+
+    renderComponentWithState(
+      {
+        tokenDetails: {
+          isZrc20Token: true,
+          tokenContractAddress:
+            "Q000000000000000000000000000000000000000000000000000000001234567890abcdef1234567890abcdef1234567800000000000000000000000000000000",
+          tokenDecimals: 18,
+          tokenImage: "token.png",
+          tokenBalance: "100.0",
+          tokenName: "Test Token",
+          tokenSymbol: "TST",
+        },
+      },
+      mockedStore({
+        ledgerStore: {
+          isLedgerAccount: () => true,
+          signAndSerializeTransaction: mockSignAndSerializeTransaction,
+        } as any,
+        qrlStore: {
+          qrlInstance: {
+            Contract: MockContract,
+            getTransactionCount: async () => 2,
+            getChainId: async () => 1,
+          } as any,
+          getGasFeeData: async () => ({
+            baseFeePerGas: BigInt(0),
+            maxFeePerGas: BigInt(2250000007),
+            maxPriorityFeePerGas: BigInt(2250000000),
+          }),
+          signZrc20Token: mockSignZrc20Token,
+          sendRawTransaction: vi.fn<any>().mockResolvedValue(undefined),
+        },
+        transactionHistoryStore: {
+          addTransaction: mockAddTransaction,
+        },
+      }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Send TST")).toBeInTheDocument();
+    });
+
+    await fillAndSubmitForm("Send TST");
+
+    expect(mockSignZrc20Token).not.toHaveBeenCalled();
+    expect(mockTransfer).toHaveBeenCalled();
+    expect(mockSignAndSerializeTransaction).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        nonce: "0x2",
+        to: "Q000000000000000000000000000000000000000000000000000000001234567890abcdef1234567890abcdef1234567800000000000000000000000000000000",
+        value: "0x0",
+        data: "0xa9059cbb",
+      }),
+      expect.anything(),
+    );
+    expect(mockAddTransaction).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        pendingStatus: "pending",
+        tokenSymbol: "TST",
+        data: "0xa9059cbb",
+      }),
+    );
+  });
+
   it("should load token details from storage when no state is provided", async () => {
     mockGetTransactionValues.mockResolvedValue({
       receiverAddress: "",
       amount: 0,
       tokenDetails: {
         isZrc20Token: true,
-        tokenContractAddress: "Q00000000000000000000000000000000000000000000000000000000abcdef1234567890abcdef1234567890abcdef1200000000000000000000000000000000",
+        tokenContractAddress:
+          "Q00000000000000000000000000000000000000000000000000000000abcdef1234567890abcdef1234567890abcdef1200000000000000000000000000000000",
         tokenDecimals: 8,
         tokenImage: "stored-token.png",
         tokenBalance: "200.0",
@@ -465,9 +546,7 @@ describe("TokenTransfer", () => {
       expect(screen.getByText("Aggressive")).toBeInTheDocument();
     });
 
-    expect(
-      screen.queryByText(/Insufficient/),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Insufficient/)).not.toBeInTheDocument();
 
     const sendButton = screen.getByRole("button", { name: "Send QRL" });
     expect(sendButton).toBeEnabled();
@@ -478,7 +557,8 @@ describe("TokenTransfer", () => {
       {
         tokenDetails: {
           isZrc20Token: true,
-          tokenContractAddress: "Q000000000000000000000000000000000000000000000000000000001234567890abcdef1234567890abcdef1234567800000000000000000000000000000000",
+          tokenContractAddress:
+            "Q000000000000000000000000000000000000000000000000000000001234567890abcdef1234567890abcdef1234567800000000000000000000000000000000",
           tokenDecimals: 18,
           tokenImage: "token.png",
           tokenBalance: "50.0 TST",
@@ -528,7 +608,8 @@ describe("TokenTransfer", () => {
       {
         tokenDetails: {
           isZrc20Token: true,
-          tokenContractAddress: "Q000000000000000000000000000000000000000000000000000000001234567890abcdef1234567890abcdef1234567800000000000000000000000000000000",
+          tokenContractAddress:
+            "Q000000000000000000000000000000000000000000000000000000001234567890abcdef1234567890abcdef1234567800000000000000000000000000000000",
           tokenDecimals: 18,
           tokenImage: "token.png",
           tokenBalance: "1,000.0 TST",

@@ -16,6 +16,7 @@ import {
 } from "@/components/UI/Form";
 import { Input } from "@/components/UI/Input";
 import { Label } from "@/components/UI/Label";
+import { NFT_UNITS_OF_GAS, ZRC_721_CONTRACT_ABI } from "@/constants/nftToken";
 import { ROUTES } from "@/router/router";
 import { useStore } from "@/stores/store";
 import type { TransactionHistoryEntry } from "@/types/transactionHistory";
@@ -25,6 +26,7 @@ import StorageUtil from "@/utilities/storageUtil";
 import StringUtil from "@/utilities/stringUtil";
 import { isQrnsName, resolveQrnsName } from "@/utilities/qrnsResolver";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { qrl, utils } from "@theqrl/web3";
 import { Image, Loader, Send, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useEffect, useRef, useState } from "react";
@@ -36,6 +38,8 @@ import { z } from "zod";
 import BackButton from "../../../Shared/BackButton/BackButton";
 import CircuitBackground from "../../../Shared/CircuitBackground/CircuitBackground";
 import RecipientPicker from "../TokenTransfer/RecipientPicker/RecipientPicker";
+
+const { Common } = qrl.accounts;
 
 const createFormSchema = (t: TFunction) =>
   z
@@ -57,13 +61,16 @@ const NFTTransfer = observer(() => {
   const FormSchema = createFormSchema(t);
   const { state } = useLocation();
   const navigate = useNavigate();
-  const { lockStore, qrlStore, transactionHistoryStore } = useStore();
+  const { lockStore, qrlStore, ledgerStore, transactionHistoryStore } =
+    useStore();
   const { getAccountSeed } = lockStore;
   const {
     activeAccount,
     signNftTransfer,
     fetchAccounts,
     sendRawTransaction,
+    qrlInstance,
+    getGasFeeData,
   } = qrlStore;
   const { accountAddress } = activeAccount;
 
@@ -78,8 +85,7 @@ const NFTTransfer = observer(() => {
   const [qrnsResolving, setQrnsResolving] = useState(false);
   const [qrnsError, setQrnsError] = useState<string | null>(null);
 
-  const { prefix, addressSplit } =
-    StringUtil.getSplitAddress(contractAddress);
+  const { prefix, addressSplit } = StringUtil.getSplitAddress(contractAddress);
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -96,6 +102,77 @@ const NFTTransfer = observer(() => {
     formState: { isSubmitting, isValid },
   } = form;
 
+  type SignResult = {
+    transactionHash?: string;
+    rawTransaction?: string;
+    error: string;
+    nonce?: number;
+    maxFeePerGas?: string;
+    maxPriorityFeePerGas?: string;
+    gasLimit?: number;
+    data?: string;
+  };
+
+  const signNftTransferWithLedger = async (
+    receiver: string,
+  ): Promise<SignResult> => {
+    let result: SignResult = { error: "" };
+
+    try {
+      if (!qrlInstance?.Contract) {
+        throw new Error("Blockchain connection not available");
+      }
+
+      const contract = new qrlInstance.Contract(
+        ZRC_721_CONTRACT_ABI,
+        contractAddress,
+      );
+      const transferCall = contract.methods.safeTransferFrom(
+        accountAddress,
+        receiver,
+        BigInt(tokenId),
+      );
+      const encodedData = transferCall.encodeABI();
+      const { maxFeePerGas, maxPriorityFeePerGas } = await getGasFeeData();
+      const nonce = await qrlInstance.getTransactionCount(accountAddress);
+      const chainId = await qrlInstance.getChainId();
+
+      const common = Common.custom({ chainId: Number(chainId) });
+      const txData = {
+        nonce: `0x${(nonce ?? 0).toString(16)}`,
+        maxPriorityFeePerGas: `0x${Number(maxPriorityFeePerGas).toString(16)}`,
+        maxFeePerGas: `0x${Number(maxFeePerGas).toString(16)}`,
+        gasLimit: `0x${BigInt(NFT_UNITS_OF_GAS).toString(16)}`,
+        to: contractAddress,
+        value: "0x0",
+        data: encodedData,
+      };
+
+      const signedRawTxHex = await ledgerStore.signAndSerializeTransaction(
+        accountAddress,
+        txData,
+        common,
+      );
+      const transactionHash = utils.sha3(signedRawTxHex);
+
+      result = {
+        transactionHash: transactionHash?.toString(),
+        rawTransaction: signedRawTxHex,
+        error: "",
+        nonce: Number(nonce),
+        maxFeePerGas: maxFeePerGas.toString(),
+        maxPriorityFeePerGas: maxPriorityFeePerGas.toString(),
+        gasLimit: NFT_UNITS_OF_GAS,
+        data: encodedData,
+      };
+    } catch (error) {
+      console.error("[NFTTransfer] Ledger signing failed:", error);
+      result.error = error instanceof Error ? error.message : String(error);
+    }
+
+    return result;
+  };
+
   async function onSubmit(formData: z.infer<typeof FormSchema>) {
     try {
       let receiver = formData.receiverAddress;
@@ -103,16 +180,27 @@ const NFTTransfer = observer(() => {
         receiver = resolvedAddress;
       }
 
-      const seed = await getAccountSeed(accountAddress);
-      const signResult = await signNftTransfer(
-        accountAddress,
-        receiver,
-        tokenId,
-        seed,
-        contractAddress,
-      );
+      const isLedgerAccount = ledgerStore.isLedgerAccount(accountAddress);
+      const signResult = isLedgerAccount
+        ? await signNftTransferWithLedger(receiver)
+        : await signNftTransfer(
+            accountAddress,
+            receiver,
+            tokenId,
+            await getAccountSeed(accountAddress),
+            contractAddress,
+          );
 
-      const { transactionHash, rawTransaction, error, nonce, maxFeePerGas, maxPriorityFeePerGas, gasLimit, data } = signResult;
+      const {
+        transactionHash,
+        rawTransaction,
+        error,
+        nonce,
+        maxFeePerGas,
+        maxPriorityFeePerGas,
+        gasLimit,
+        data,
+      } = signResult;
 
       if (error) {
         control.setError("receiverAddress", {
@@ -170,8 +258,7 @@ const NFTTransfer = observer(() => {
                 status: isSuccess,
                 blockNumber: receipt.blockNumber?.toString() ?? "",
                 gasUsed: receipt.gasUsed?.toString() ?? "",
-                effectiveGasPrice:
-                  (receipt.effectiveGasPrice ?? 0).toString(),
+                effectiveGasPrice: (receipt.effectiveGasPrice ?? 0).toString(),
               },
             );
             await fetchAccounts();
@@ -354,9 +441,7 @@ const NFTTransfer = observer(() => {
                 ) : (
                   <Send className="mr-2 h-4 w-4" />
                 )}
-                {isSubmitting
-                  ? t("nft.sendingNft")
-                  : t("nft.sendNftButton")}
+                {isSubmitting ? t("nft.sendingNft") : t("nft.sendNftButton")}
               </Button>
             </CardFooter>
           </Card>
