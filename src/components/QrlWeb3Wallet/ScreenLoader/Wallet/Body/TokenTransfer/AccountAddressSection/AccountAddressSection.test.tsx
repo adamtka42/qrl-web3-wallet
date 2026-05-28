@@ -22,7 +22,7 @@ describe("AccountAddressSection", () => {
 
     expect(screen.getByText("Account address")).toBeInTheDocument();
     expect(
-      screen.getByText("Q 00000 00000 00000 00000 00000 00000 00000 00000 00000 00000 00000 08A8e AFb1c f62Bf Beb17 41769 DAE1a 9dd47 99619 20000 00000 00000 00000 00000 00000 000"),
+      screen.getByText("Q 00000 00000 00000 00000 00000 00000 00000 00000 00000 00000 00000 08a8e AfB1C F62bF bEb17 41769 DaE1A 9dd47 99619 20000 00000 00000 00000 00000 00000 000"),
     ).toBeInTheDocument();
     expect(screen.getByText("Balance")).toBeInTheDocument();
     expect(screen.getByText("0.0 QRL")).toBeInTheDocument();

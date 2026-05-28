@@ -7,7 +7,7 @@ export const QRL_ZERO_ADDRESS =
   `${QRL_ADDRESS_PREFIX}${"0".repeat(QRL_ADDRESS_HEX_LENGTH)}` as const;
 
 const expandLegacyFixture = (suffix: string) =>
-  `${"0".repeat(96 - suffix.length)}${suffix}`.padEnd(
+  `${"0".repeat(96 - suffix.length)}${suffix}`.toLowerCase().padEnd(
     QRL_ADDRESS_HEX_LENGTH,
     "0",
   );

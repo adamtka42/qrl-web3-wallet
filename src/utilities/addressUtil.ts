@@ -1,16 +1,12 @@
+import { QRL_ADDRESS_LENGTH } from "@/constants/address";
 import {
-  QRL_ADDRESS_HEX_LENGTH,
-  QRL_ADDRESS_LENGTH,
-  QRL_ADDRESS_PREFIX,
-} from "@/constants/address";
-
-const QRL_ADDRESS_REGEX = new RegExp(
-  `^${QRL_ADDRESS_PREFIX}[0-9a-fA-F]{${QRL_ADDRESS_HEX_LENGTH}}$`,
-);
+  isAddressString,
+  toChecksumAddress,
+} from "@theqrl/web3-validator";
 
 class AddressUtil {
   static isQrlAddress(address: string): boolean {
-    return QRL_ADDRESS_REGEX.test(address);
+    return isAddressString(address);
   }
 
   static isLegacyQrlAddress(address: string): boolean {
@@ -22,7 +18,15 @@ class AddressUtil {
     if (!AddressUtil.isQrlAddress(trimmed)) {
       throw new Error(`Expected ${QRL_ADDRESS_LENGTH}-character QRL address`);
     }
-    return trimmed;
+    return AddressUtil.toChecksumQrlAddress(trimmed);
+  }
+
+  static toChecksumQrlAddress(address: string): string {
+    const trimmed = address.trim();
+    if (!AddressUtil.isQrlAddress(trimmed)) {
+      throw new Error(`Expected ${QRL_ADDRESS_LENGTH}-character QRL address`);
+    }
+    return toChecksumAddress(trimmed);
   }
 
   static shortenQrlAddress(address: string, headLength = 10, tailLength = 8): string {

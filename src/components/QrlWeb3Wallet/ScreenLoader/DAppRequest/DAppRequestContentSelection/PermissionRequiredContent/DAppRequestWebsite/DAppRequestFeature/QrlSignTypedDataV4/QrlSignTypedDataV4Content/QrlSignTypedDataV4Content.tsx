@@ -77,7 +77,7 @@ const QrlSignTypedDataV4Content = observer(() => {
       const seed = await getAccountSeed(fromAddress ?? "");
       const addressFromSeed =
         qrlInstance?.accounts.seedToAccount(seed)?.address;
-      if (fromAddress !== addressFromSeed) {
+      if (fromAddress.toLowerCase() !== addressFromSeed?.toLowerCase()) {
         throw new Error("Account seed did not match with the address");
       }
       const messageHash = getEncodedEip712Data(typedData, true);

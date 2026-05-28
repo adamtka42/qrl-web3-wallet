@@ -9,6 +9,11 @@ import ContactsPage from "./ContactsPage";
 describe("ContactsPage", () => {
   afterEach(cleanup);
 
+  const contactAddress =
+    "Q0000000000000000000000000000000000000000000000000000000020b714091cf2a62dadda2847803e3f1b9d2d377900000000000000000000000000000000";
+  const newContactAddress =
+    "Q0000000000000000000000000000000000000000000000000000000020fb08ff1f1376a14c055e9f56df80563e16722b00000000000000000000000000000000";
+
   const renderComponent = (mockedStoreValues = mockedStore()) =>
     render(
       <StoreProvider value={mockedStoreValues}>
@@ -58,7 +63,7 @@ describe("ContactsPage", () => {
           contacts: [
             {
               name: "Alice",
-              address: "Q0000000000000000000000000000000000000000000000000000000020B714091cF2a62DADda2847803e3f1B9D2D377900000000000000000000000000000000",
+              address: contactAddress,
             },
           ],
         },
@@ -75,7 +80,7 @@ describe("ContactsPage", () => {
           contacts: [
             {
               name: "Alice",
-              address: "Q0000000000000000000000000000000000000000000000000000000020B714091cF2a62DADda2847803e3f1B9D2D377900000000000000000000000000000000",
+              address: contactAddress,
             },
           ],
         },
@@ -95,7 +100,7 @@ describe("ContactsPage", () => {
           contacts: [
             {
               name: "Alice",
-              address: "Q0000000000000000000000000000000000000000000000000000000020B714091cF2a62DADda2847803e3f1B9D2D377900000000000000000000000000000000",
+              address: contactAddress,
             },
           ],
           removeContact,
@@ -106,7 +111,7 @@ describe("ContactsPage", () => {
     await userEvent.click(screen.getByLabelText("Delete contact"));
 
     expect(removeContact).toHaveBeenCalledWith(
-      "Q0000000000000000000000000000000000000000000000000000000020B714091cF2a62DADda2847803e3f1B9D2D377900000000000000000000000000000000",
+      contactAddress,
     );
   });
 
@@ -128,7 +133,7 @@ describe("ContactsPage", () => {
     );
     await userEvent.type(
       screen.getByPlaceholderText("Q address"),
-      "Q0000000000000000000000000000000000000000000000000000000020fB08fF1f1376A14C055E9F56df80563E16722b00000000000000000000000000000000",
+      newContactAddress,
     );
 
     const saveButton = screen.getByRole("button", { name: /Save/i });
@@ -141,7 +146,7 @@ describe("ContactsPage", () => {
     await waitFor(() => {
       expect(addContact).toHaveBeenCalledWith({
         name: "Bob",
-        address: "Q0000000000000000000000000000000000000000000000000000000020fB08fF1f1376A14C055E9F56df80563E16722b00000000000000000000000000000000",
+        address: newContactAddress,
       });
     });
 
@@ -157,7 +162,7 @@ describe("ContactsPage", () => {
           contacts: [
             {
               name: "Alice",
-              address: "Q0000000000000000000000000000000000000000000000000000000020B714091cF2a62DADda2847803e3f1B9D2D377900000000000000000000000000000000",
+              address: contactAddress,
             },
           ],
           updateContact,
@@ -180,10 +185,10 @@ describe("ContactsPage", () => {
 
     await waitFor(() => {
       expect(updateContact).toHaveBeenCalledWith(
-        "Q0000000000000000000000000000000000000000000000000000000020B714091cF2a62DADda2847803e3f1B9D2D377900000000000000000000000000000000",
+        contactAddress,
         {
           name: "Alice Updated",
-          address: "Q0000000000000000000000000000000000000000000000000000000020B714091cF2a62DADda2847803e3f1B9D2D377900000000000000000000000000000000",
+          address: contactAddress,
         },
       );
     });
